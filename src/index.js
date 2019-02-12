@@ -1,6 +1,20 @@
 "use strict";
 
 var dotenv;
+var filter;
+
+function getFilter(pattern) {
+  if (pattern) {
+    if (pattern instanceof RegExp) {
+      return pattern
+    }
+
+    var normalizedPattern = pattern.replace(/^\//, '').replace(/\/$/, '');
+    return new RegExp(normalizedPattern);
+  }
+
+  return /.*/
+}
 
 module.exports = function (options) {
   var t = options.types;
@@ -18,25 +32,30 @@ module.exports = function (options) {
               dotenvExpand(dotenv);
           }
           var key = path.toComputedKey();
+          if (!filter) {
+            filter = getFilter(state.opts.pattern);
+          }
           if (t.isStringLiteral(key)) {
             var name = key.value;
-            var value = state.opts.env && name in state.opts.env ? state.opts.env[name] : process.env[name];
-            var me = t.memberExpression;
-            var i = t.identifier;
-            var le = t.logicalExpression;
-            var replace = state.opts.unsafe
-              ? t.valueToNode(value)
-              : le(
-                  "||",
-                  le(
-                    "&&",
-                    le("&&", i("process"), me(i("process"), i("env"))),
-                    me(i("process.env"), i(name))
-                  ),
-                  t.valueToNode(value)
-                );
+            if (filter.test(name)) {
+              var value = state.opts.env && name in state.opts.env ? state.opts.env[name] : process.env[name];
+              var me = t.memberExpression;
+              var i = t.identifier;
+              var le = t.logicalExpression;
+              var replace = state.opts.unsafe
+                ? t.valueToNode(value)
+                : le(
+                    "||",
+                    le(
+                      "&&",
+                      le("&&", i("process"), me(i("process"), i("env"))),
+                      me(i("process.env"), i(name))
+                    ),
+                    t.valueToNode(value)
+                  );
 
-            path.replaceWith(replace);
+              path.replaceWith(replace);
+            }
           }
         }
       }

@@ -54,6 +54,40 @@ To replace with env value without `process && process.env && process.env.MY_VARI
 }
 ```
 
+To process only env values matching a specific pattern, provide a regex 
+string as option `pattern`.
+F.e. the following configuration will replace `process.env.APP_API_URL`, but it
+won't replace `process.env.HOME`:
+
+```json
+{
+  "plugins": [["inline-dotenv",{
+    "pattern": '/^APP_/'
+  }]]
+}
+```
+
+Same functionality:
+
+
+```json
+{
+  "plugins": [["inline-dotenv",{
+    "pattern": '^APP_'
+  }]]
+}
+```
+
+Or in `babel.config.js`:
+
+```js
+{
+  plugins: [["inline-dotenv",{
+    pattern: /^APP_/
+  }]]
+}
+```
+
 
 ### Via CLI
 
